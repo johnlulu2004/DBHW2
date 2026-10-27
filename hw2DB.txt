@@ -50,28 +50,79 @@ WHERE a.Advisor = f.FacID
     AND e1.StuID = a.StuID 
     AND e1.CID = e2.CID 
     AND e1.StuID != e2.StuID
-    AND l1.StuID = B.StuID
-
-
-
-
-
-SELECT DISTINCT CONCAT(f.fname, ' ', f.lname) AS name
-FROM Faculty f, Member_of m, Student s1, Enrolled_in e1, Enrolled_in e2,
-     Lives_in l2, Lives_in l3, Student s3
-WHERE m.facid = f.facid
-  AND s1.advisor = f.facid
-  AND e1.stuid = s1.stuid
-  AND e2.cid = e1.cid
-  AND e2.stuid <> s1.stuid
-  AND l2.stuid = e2.stuid
-  AND l3.dormid = l2.dormid
-  AND l3.room_number = l2.room_number
-  AND l3.stuid <> l2.stuid
-  AND s3.stuid = l3.stuid
-  AND (s3.major = m.dno
-       OR EXISTS (SELECT 1
+    AND l1.StuID = e2.StuID
+    AND l2.dormid = l1.dormid
+    AND l2.room_number = l1.room_number
+    AND l2.stuid != l1.stuid
+    AND c.stuid = l2.stuid
+    AND m.facid = f.facid
+    AND (c.major = m.dno
+        OR EXISTS (SELECT *
                   FROM Minor_in mi
-                  WHERE mi.stuid = s3.stuid
-                    AND mi.dno = m.dno));
+                  WHERE mi.stuid = c.stuid
+                  AND mi.dno = m.dno));
+
+
+6. List the names of the students who like every other student who is in their major.
+
+SELECT s.FName, s.LName
+FROM Student s
+WHERE NOT EXIST (
+  SELECT * 
+  FROM Student s2
+  WHERE s2.major = s.major
+    AND s2.stuid != s.stuid
+    
+    AND NOT EXISTS (
+      SELECT *
+      FROM Likes l
+      WHERE l.wholikes = s.stuid
+      AND l.whoisliked = s2.stuid));
+
+
+// we select the name of studnet when there doesn't exist another student in their major who they don't like?
+
+
+7.For each course with a total enrollment greater than 0, list the total number of grades 
+lower than B in the class, the total enrollment in the class, and the percentage of
+grades in the class that are B or below (also include the course name and instructors
+name). To simplify this query, you can make use of the GRADECONVERSION
+relation and the fact that a B has a gradepoint of 3.0. Also, B- is lower than B.
+
+SELECT c.cname, 
+      f.fname,
+      f.lname, 
+      COUNT(*) AS total_enrollment ,
+      SUM(CASE WHEN g.gradepoint < 3.0 THEN 1 ELSE 0 END) AS total_below_b,
+      100.0 * SUM(CASE WHEN g.gradepoint < 3.0 THEN 1 ELSE 0 END) / COUNT(*) AS pct_below_b
+FROM Course c
+JOIN Faculty f              ON c.instructor = f.facid
+JOIN Enrolled_in e          ON c.cid = e.cid
+LEFT JOIN Gradeconversion g ON e.grade = g.lettergrade
+GROUP BY c.cid, c.cname, f.facid, f.fname, f.lname
+HAVING COUNT(e.stuid) > 0;
+
+
+8. List the names and student ID numbers of all pairs of student who love each other.
+(Do not list a pair more than once; list the student with the lowest ID number in the
+pair first)
+
+SELECT s1.stuid 
+    s1.fname, 
+    s1.lname, 
+    s2.stuid,
+    s2.fname,
+    s2.lname 
+FROM Loves l1, Loves l2, Student s1, Student s2
+WHERE s1.stuid < s2.stuid
+      AND l1.wholoves = s1.stuid
+      AND l1.whoisloved = s2.stuid
+      AND l2.wholoves = s2.stuid
+      AND l2.whoisloved = s1.stuid
+
+
+
+
+
+
 
