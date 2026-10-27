@@ -1,0 +1,77 @@
+
+ mySQL queries numbered 1,2,4-14,16,17,19-
+24,26,28,30-32,47-62 (42 queries total)
+
+1. List the name and age of the oldest student in every major. If there is a tie, list all
+students tying
+
+SELECT s.FName, s.LName, s.age 
+FROM Student s
+WHERE s.age = (
+    SELECT MAX(s2.age)
+    FROM Student s2
+    WHERE s2.major = s.major
+);
+
+2. List the name, age and gender of all students who do not have a roommate.
+
+SELECT s.FName, s.LName, s.age, s.sex
+FROM Student s
+WHERE NOT EXISTS (
+    SELECT * FROM Lives_in a, Lives_in b
+    WHERE a.StuID = s.StuID 
+        AND  b.dormid = a.dormid 
+        AND b.room_number = a.room_number 
+        AND b.stuid != a.stuid);
+
+
+4. List the name and major (name not number) of all students who are enrolled in more
+than 19 credits
+
+SELECT s.Fname, s.Lname, d.DName
+FROM Student s, Department d, Enrolled_In e, Course c
+WHERE s.Major = d.DNO
+  AND s.StuID = e.StuID
+  AND e.CID = c.CID
+GROUP BY s.StuID, s.Fname, s.Lname, d.DName
+HAVING SUM(c.Credits) > 19;
+
+
+5. List the name of all faculty members who advise a student who is enrolled in a course
+with a student who is a roomate of a student who majors or minors in the same
+department that the faculty member is a member of.
+
+
+SELECT f.Fname, f.LName
+FROM Faculty f, Student a, Enrolled_In e1, Enrolled_In e2,
+     Lives_In l1, Lives_In l2, Student c, Member_Of m
+
+WHERE a.Advisor = f.FacID 
+    AND e1.StuID = a.StuID 
+    AND e1.CID = e2.CID 
+    AND e1.StuID != e2.StuID
+    AND l1.StuID = B.StuID
+
+
+
+
+
+SELECT DISTINCT CONCAT(f.fname, ' ', f.lname) AS name
+FROM Faculty f, Member_of m, Student s1, Enrolled_in e1, Enrolled_in e2,
+     Lives_in l2, Lives_in l3, Student s3
+WHERE m.facid = f.facid
+  AND s1.advisor = f.facid
+  AND e1.stuid = s1.stuid
+  AND e2.cid = e1.cid
+  AND e2.stuid <> s1.stuid
+  AND l2.stuid = e2.stuid
+  AND l3.dormid = l2.dormid
+  AND l3.room_number = l2.room_number
+  AND l3.stuid <> l2.stuid
+  AND s3.stuid = l3.stuid
+  AND (s3.major = m.dno
+       OR EXISTS (SELECT 1
+                  FROM Minor_in mi
+                  WHERE mi.stuid = s3.stuid
+                    AND mi.dno = m.dno));
+
