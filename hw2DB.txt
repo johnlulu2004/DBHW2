@@ -1,6 +1,8 @@
 
- mySQL queries numbered 1,2,4-14,16,17,19-
+mySQL queries numbered 1,2,4-14,16,17,19-
 24,26,28,30-32,47-62 (42 queries total)
+
+MY SQL QUERIES
 
 1. List the name and age of the oldest student in every major. If there is a tie, list all
 students tying
@@ -121,6 +123,89 @@ WHERE s1.stuid < s2.stuid
       AND l2.whoisloved = s1.stuid
 
 
+9.List the names of all students who love someone who does not love them back
+
+SELECT s.fname, s.lname
+FROM Student s
+WHERE EXISTS (SELECT * 
+  FROM Student s2, Loves l
+  WHERE l.wholoves = s.stuid
+        AND l.whoisloved = s2.stuid
+        AND NOT EXISTS (SELECT * 
+        FROM Loves l2
+        WHERE l2.wholoves = s2.stuid
+          AND l2.whoisloved = s.stuid)
+)
+
+
+10. List the the names of all pairs of roommates where there exists a third party who
+loves them both. (Do not list a pair more than once; list the student with the lowest
+ID number in the pair first)
+
+
+SELECT s1.fname, 
+        s1.lname,
+        s2.fname, 
+        s2.lname
+FROM Student s1, Student s2, Lives_in a, Lives_in b
+WHERE s1.stuid < s2.stuid
+AND a.stuid = s1.stuid
+AND b.stuid = s2.stuid
+AND s1.stuid != s2.stuid
+AND a.dormid = b.dormid
+AND a.room_number = b.room_number
+AND EXISTS (SELECT * 
+  FROM Student s3, Loves l1, Loves l2
+  WHERE l1.wholoves = s3.stuid
+  AND l1.whoisloved = s1.stuid
+  AND l2.wholoves = s3.stuid
+  AND l2.whoisloved = s2.stuid
+  AND s3.stuid != s1.stuid 
+  AND s3.stuid !=  s2.stuid)
+
+
+11. List the name and gender of the student who is liked by the most other students,
+including the total number of students who like him or her.
+
+SELECT s.fname, s.lname, s.sex 
+COUNT(*) AS num_students_like
+FROM Student s, Likes l1
+WHERE s.stuid = l.whoisliked
+GROUP BY s.stuid, s.fname, s.lname, s.sex
+HAVING COUNT(*) >= ALL (SELECT COUNT(*)
+                        FROM Likes l2
+                        WHERE l2.wholikes != l2.whoisliked
+                        GROUP BY l2.whoisliked);
+
+
+12. List the most common first name in the database (including first names of both
+faculty and students), along with the number of times this first name appears in the
+database.
+
+
+SELECT fname, COUNT(*)
+FROM (
+  SELECT fname FROM Student UNION ALL SELECT fname FROM Faculty
+) AS combined_names
+GROUP BY combined_names.fname
+HAVING COUNT(*) >= ALL (
+    SELECT COUNT(*)
+    FROM (
+      SELECT fname FROM Student UNION ALL SELECT fname FROM Faculty
+    ) AS combined_names2
+    GROUP BY fname
+);
+
+
+13. List the name, age and major of all students along with the total number of credits
+they are enrolled in.
+
+SELECT s.fname, s.lname, s.age, d.DName as major, SUM(c.Credits) AS num_credits
+FROM Student s
+JOIN Department d ON s.major = d.DNO
+LEFT JOIN Enrolled_In e ON s.stuid = e.stuid
+LEFT JOIN Course c ON c.CID = e.CID, 
+GROUP BY s.stuid, s.fname, s.lname, s.age, d.DName
 
 
 
