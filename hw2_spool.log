@@ -1,0 +1,2168 @@
+--------------
+-- 1. List the name and age of the oldest student in every major. If there is a tie, list all
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- students tying
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.FName, s.LName, s.age
+FROM Student s
+WHERE s.age = (
+    SELECT MAX(s2.age)
+    FROM Student s2
+    WHERE s2.major = s.major
+)
+--------------
+
++-------+----------+------+
+| FName | LName    | age  |
++-------+----------+------+
+| Bruce | Wilson   |   27 |
+| Ian   | Thornton |   22 |
+| Stacy | Prater   |   18 |
+| Jun   | Han      |   17 |
+| Lisa  | Cheng    |   21 |
+| Sarah | Schmidt  |   26 |
++-------+----------+------+
+6 rows in set (0.001 sec)
+
+--------------
+-- 2. List the name, age and gender of all students who do not have a roommate.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.FName, s.LName, s.age, s.sex
+FROM Student s
+WHERE NOT EXISTS (
+    SELECT * FROM Lives_in a, Lives_in b
+    WHERE a.StuID = s.StuID
+        AND b.dormid = a.dormid
+        AND b.room_number = a.room_number
+        AND b.stuid != a.stuid)
+--------------
+
++---------+----------+------+------+
+| FName   | LName    | age  | sex  |
++---------+----------+------+------+
+| Dinesh  | Kumar    |   20 | M    |
+| Andy    | Schultz  |   18 | M    |
+| Lisa    | Apap     |   18 | F    |
+| Jandy   | Nelson   |   20 | F    |
+| Eric    | Tai      |   19 | M    |
+| David   | Adams    |   22 | M    |
+| Charles | Norris   |   18 | M    |
+| Mark    | Schwartz |   17 | M    |
+| Bruce   | Wilson   |   27 | M    |
+| Michael | Leighton |   20 | M    |
+| Arthur  | Pang     |   18 | M    |
+| Michael | Woods    |   17 | M    |
+| Stacy   | Prater   |   18 | F    |
+| Eric    | Pang     |   19 | M    |
+| Paul    | Brody    |   18 | M    |
+| Eric    | Rugh     |   20 | M    |
+| Jun     | Han      |   17 | M    |
+| Lisa    | Cheng    |   21 | F    |
+| William | Simms    |   18 | M    |
+| Eric    | Epp      |   18 | M    |
+| John    | Doe      |   21 | M    |
++---------+----------+------+------+
+21 rows in set (0.001 sec)
+
+--------------
+-- 4. List the name and major (name not number) of all students who are enrolled in more
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- than 19 credits
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.Fname, s.Lname, d.DName
+FROM Student s, Department d, Enrolled_in e, Course c
+WHERE s.Major = d.DNO
+  AND s.StuID = e.StuID
+  AND e.CID = c.CID
+GROUP BY s.StuID, s.Fname, s.Lname, d.DName
+HAVING SUM(c.Credits) > 19
+--------------
+
++---------+----------+-----------------------+
+| Fname   | Lname    | DName                 |
++---------+----------+-----------------------+
+| Tracy   | Kim      | Computer Science      |
+| Eric    | Tai      | Computer Science      |
+| Derek   | Lee      | Computer Science      |
+| David   | Adams    | Computer Science      |
+| Charles | Norris   | Computer Science      |
+| Mark    | Schwartz | Computer Science      |
+| George  | Andreou  | ECE                   |
+| Michael | Woods    | Chemical Engineering  |
+| David   | Shieber  | ECE                   |
+| Stacy   | Prater   | Chemical Engineering  |
+| Mark    | Goldman  | ECE                   |
+| Jun     | Han      | History               |
+| Lisa    | Cheng    | Mathematical Sciences |
++---------+----------+-----------------------+
+13 rows in set (0.089 sec)
+
+--------------
+-- 5. List the name of all faculty members who advise a student who is enrolled in a course
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- with a student who is a roomate of a student who majors or minors in the same
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- department that the faculty member is a member of.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT f.Fname, f.LName
+FROM Faculty f, Student a, Enrolled_in e1, Enrolled_in e2,
+     Lives_in l1, Lives_in l2, Student c, Member_of m
+WHERE a.Advisor = f.FacID
+    AND e1.StuID = a.StuID
+    AND e1.CID = e2.CID
+    AND e1.StuID != e2.StuID
+    AND l1.StuID = e2.StuID
+    AND l2.dormid = l1.dormid
+    AND l2.room_number = l1.room_number
+    AND l2.stuid != l1.stuid
+    AND c.stuid = l2.stuid
+    AND m.facid = f.facid
+    AND (c.major = m.dno
+        OR EXISTS (SELECT *
+                   FROM Minor_in mi
+                   WHERE mi.stuid = c.stuid
+                   AND mi.dno = m.dno))
+--------------
+
++-----------+--------------+
+| Fname     | LName        |
++-----------+--------------+
+| Lenore    | Cowen        |
+| Carey     | Priebe       |
+| Lenore    | Cowen        |
+| Lenore    | Cowen        |
+| Carey     | Priebe       |
+| Lenore    | Cowen        |
+| Lenore    | Cowen        |
+| Lenore    | Cowen        |
+| Carey     | Priebe       |
+| Lenore    | Cowen        |
+| Carey     | Priebe       |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| Steven    | Salzberg     |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| David     | Yarowsky     |
+| Russell   | Taylor       |
+| Steven    | Salzberg     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| Yair      | Amir         |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Steven    | Salzberg     |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Baruch    | Awerbuch     |
+| Subodh    | Kumar        |
+| Gerald    | Masson       |
+| Lawrence  | Wolff        |
+| Michael   | Goodrich     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Frederick | Jelinek      |
+| David     | Yarowsky     |
+| Frederick | Jelinek      |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Gerald    | Masson       |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| Frederick | Jelinek      |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Russell   | Taylor       |
+| Steven    | Salzberg     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| David     | Yarowsky     |
+| Steven    | Salzberg     |
+| David     | Yarowsky     |
+| David     | Yarowsky     |
+| Carey     | Priebe       |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Steven    | Salzberg     |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| Carey     | Priebe       |
+| Lenore    | Cowen        |
+| Lenore    | Cowen        |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Steven    | Salzberg     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Baruch    | Awerbuch     |
+| Subodh    | Kumar        |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Michael   | Goodrich     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Russell   | Taylor       |
+| Steven    | Salzberg     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Eric      | Brill        |
+| Yair      | Amir         |
+| Frederick | Jelinek      |
+| Lawrence  | Wolff        |
+| Gert      | Cauwenberghs |
+| Gert      | Cauwenberghs |
+| Gert      | Cauwenberghs |
+| Frederick | Jelinek      |
+| Gert      | Cauwenberghs |
+| Andreas   | Andreou      |
+| Gert      | Cauwenberghs |
+| Lawrence  | Wolff        |
+| Gert      | Cauwenberghs |
+| John      | Goutsias     |
+| Andreas   | Andreou      |
+| Lawrence  | Wolff        |
+| Gert      | Cauwenberghs |
+| John      | Goutsias     |
+| Andreas   | Andreou      |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| John      | Goutsias     |
+| John      | Goutsias     |
+| John      | Goutsias     |
+| John      | Goutsias     |
+| Gert      | Cauwenberghs |
+| John      | Goutsias     |
+| Andreas   | Andreou      |
+| Gert      | Cauwenberghs |
+| John      | Goutsias     |
+| Andreas   | Andreou      |
+| Lawrence  | Wolff        |
+| Gert      | Cauwenberghs |
+| Andreas   | Andreou      |
+| Lawrence  | Wolff        |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| Gert      | Cauwenberghs |
+| Gert      | Cauwenberghs |
+| John      | Goutsias     |
+| Andreas   | Andreou      |
+| Frederick | Jelinek      |
+| Frederick | Jelinek      |
+| Lawrence  | Wolff        |
+| Gert      | Cauwenberghs |
+| Gert      | Cauwenberghs |
+| Frederick | Jelinek      |
+| Gert      | Cauwenberghs |
+| Andreas   | Andreou      |
+| Baruch    | Awerbuch     |
+| Gerald    | Masson       |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Gerald    | Masson       |
+| Subodh    | Kumar        |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Steven    | Salzberg     |
+| Michael   | Goodrich     |
+| Yair      | Amir         |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Baruch    | Awerbuch     |
+| Subodh    | Kumar        |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Lawrence  | Wolff        |
+| Michael   | Goodrich     |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Yair      | Amir         |
+| Russell   | Taylor       |
+| Steven    | Salzberg     |
+| Lawrence  | Wolff        |
+| David     | Yarowsky     |
+| Michael   | Goodrich     |
+| Gerald    | Masson       |
+| Gerald    | Masson       |
+| Gerald    | Masson       |
+| David     | Yarowsky     |
+| Gerald    | Masson       |
+| Baruch    | Awerbuch     |
++-----------+--------------+
+196 rows in set (0.111 sec)
+
+--------------
+-- 6. List the names of the students who like every other student who is in their major.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.FName, s.LName
+FROM Student s
+WHERE NOT EXISTS (
+  SELECT *
+  FROM Student s2
+  WHERE s2.major = s.major
+    AND s2.stuid != s.stuid
+    AND NOT EXISTS (
+      SELECT *
+      FROM Likes l
+      WHERE l.wholikes = s.stuid
+      AND l.whoisliked = s2.stuid))
+--------------
+
++---------+----------+
+| FName   | LName    |
++---------+----------+
+| Ian     | Thornton |
+| Paul    | Brody    |
+| Jun     | Han      |
+| Eric    | Brown    |
+| William | Simms    |
+| Eric    | Epp      |
++---------+----------+
+6 rows in set (0.001 sec)
+
+--------------
+-- we select the name of studnet when there doesn't exist another student in their major who they don't like?
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- 7. For each course with a total enrollment greater than 0, list the total number of grades
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- lower than B in the class, the total enrollment in the class, and the percentage of
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- grades in the class that are B or below (also include the course name and instructors
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- name). To simplify this query, you can make use of the GRADECONVERSION
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- relation and the fact that a B has a gradepoint of 3.0. Also, B- is lower than B.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT c.cname,
+      f.fname,
+      f.lname,
+      COUNT(*) AS total_enrollment,
+      SUM(CASE WHEN g.gradepoint < 3.0 THEN 1 ELSE 0 END) AS total_below_b,
+      100.0 * SUM(CASE WHEN g.gradepoint < 3.0 THEN 1 ELSE 0 END) / COUNT(*) AS pct_below_b
+FROM Course c
+JOIN Faculty f              ON c.instructor = f.facid
+JOIN Enrolled_in e          ON c.cid = e.cid
+LEFT JOIN Gradeconversion g ON e.grade = g.lettergrade
+GROUP BY c.cid, c.cname, f.facid, f.fname, f.lname
+HAVING COUNT(e.stuid) > 0
+--------------
+
++-----------------------------------------+-----------+--------------+------------------+---------------+-------------+
+| cname                                   | fname     | lname        | total_enrollment | total_below_b | pct_below_b |
++-----------------------------------------+-----------+--------------+------------------+---------------+-------------+
+| MIND, BRAIN, COMPUTERS                  | Paul      | Smolensky    |                3 |             2 |    66.66667 |
+| COGNITIVE NEUROSCIENCE                  | Brenda    | Rapp         |                3 |             2 |    66.66667 |
+| SOUND STRUCTURES IN NATURAL LANGUAGE    | Luigi     | Burzio       |                3 |             0 |     0.00000 |
+| LANGUAGE DEVELOPMENT                    | Michael   | Brent        |                1 |             1 |   100.00000 |
+| THE HISTORY OF ROMANCE LANGUAGES        | Luigi     | Burzio       |                2 |             0 |     0.00000 |
+| FORMAL METHODS IN COGNITIVE SCIENCE     | Luigi     | Burzio       |                2 |             0 |     0.00000 |
+| RESEARCH SEMINAR IN COGNITIVE PROCESSES | Brenda    | Rapp         |                2 |             2 |   100.00000 |
+| COMP. MODELS OF SENTENCE PROCESSING     | Robert    | Frank        |                2 |             0 |     0.00000 |
+| CIRCUITS                                | Richard   | Joseph       |                5 |             0 |     0.00000 |
+| ECE LABORATORY                          | Frederic  | Davidson     |                3 |             0 |     0.00000 |
+| MICROPROCESSOR LAB I                    | Robert    | Glaser       |                3 |             0 |     0.00000 |
+| CONTROL SYSTEMS                         | Pablo     | Iglesias     |                3 |             1 |    33.33333 |
+| LINEAR ALGEBRA AND DIFFERENTIAL EQNS    | Shih-Ping | Han          |                3 |             0 |     0.00000 |
+| PROBABILITY AND STATISTICS              | Lancelot  | James        |                3 |             1 |    33.33333 |
+| APPLIED STATISTICS AND DATA ANALYSIS    | Daniel    | Naiman       |                6 |             4 |    66.66667 |
+| INTRODUCTION TO PROBABILITY             | James     | Fill         |               13 |             2 |    15.38462 |
+| COMBINATORIAL ANALYSIS                  | Lenore    | Cowen        |                6 |             1 |    16.66667 |
+| PROBABILITY THEORY I                    | James     | Fill         |                3 |             1 |    33.33333 |
+| STOCHASTIC PROCESSES II                 | Lancelot  | James        |                2 |             0 |     0.00000 |
+| STATISTICAL INFERENCE                   | Cheng     | Cheng        |                1 |             0 |     0.00000 |
+| FOUNDATIONS OF OPTIMIZATION             | Jong-Shi  | Pang         |                1 |             1 |   100.00000 |
+| COMBINATORIAL ANALYSIS                  | Lenore    | Cowen        |                3 |             1 |    33.33333 |
+| NUMERICAL ANALYSIS                      | Shih-Ping | Han          |                5 |             0 |     0.00000 |
+| INTRODUCTION TO COMPUTER SCIENCE        | Joanne    | Houlahan     |                2 |             0 |     0.00000 |
+| INTRO TO PROGRAMMING IN JAVA            | Stacey    | Jones        |               12 |             1 |     8.33333 |
+| INTRO TO PROGRAMMING IN C/C++           | Joanne    | Houlahan     |                2 |             1 |    50.00000 |
+| EXPLORING THE INTERNET                  | Louis     | Beach        |                7 |             3 |    42.85714 |
+| UNIX SYSTEMS PROGRAMMING                | Louis     | Beach        |                2 |             1 |    50.00000 |
+| DATA STRUCTURES in JAVA                 | Michael   | Goodrich     |               11 |             2 |    18.18182 |
+| MULTIMEDIA COMPUTING                    | Arthur    | Delcher      |                5 |             1 |    20.00000 |
+| COMPUTATIONAL MODELS                    | Rao       | Kosaraju     |                2 |             0 |     0.00000 |
+| SUPERCOMPUTING                          | Arthur    | Delcher      |               15 |             3 |    20.00000 |
+| DATABASE SYSTEMS                        | David     | Yarowsky     |               15 |             4 |    26.66667 |
+| COMPUTER SYSTEM FUNDAMENTALS            | Gerald    | Masson       |                7 |             0 |     0.00000 |
+| DISTRIBUTED SYSTEMS                     | Yair      | Amir         |               10 |             2 |    20.00000 |
+| DATABASE SYSTEMS                        | David     | Yarowsky     |                7 |             1 |    14.28571 |
+| DISTRIBUTED SYSTEMS                     | Yair      | Amir         |                5 |             1 |    20.00000 |
+| QUANTITATIVE MEDICAL COMPUTING          | Russell   | Taylor       |                5 |             2 |    40.00000 |
+| COMPUTER VISION                         | Ellie     | Angelopoulou |                9 |             3 |    33.33333 |
+| ALGORITHMS I                            | Baruch    | Awerbuch     |               11 |             1 |     9.09091 |
+| INTRO TO NATURAL LANGUAGE PROCESSING    | Eric      | Brill        |               10 |             1 |    10.00000 |
+| HIGH PERFORMANCE GRAPHICS AND MODELING  | Subodh    | Kumar        |                2 |             0 |     0.00000 |
+| SEMINAR ON COMPUTATIONAL GEOMETRY       | Michael   | Goodrich     |                2 |             0 |     0.00000 |
++-----------------------------------------+-----------+--------------+------------------+---------------+-------------+
+43 rows in set (0.006 sec)
+
+--------------
+-- 8. List the names and student ID numbers of all pairs of student who love each other.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- (Do not list a pair more than once; list the student with the lowest ID number in the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- pair first)
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s1.stuid,
+    s1.fname,
+    s1.lname,
+    s2.stuid,
+    s2.fname,
+    s2.lname
+FROM Loves l1, Loves l2, Student s1, Student s2
+WHERE s1.stuid < s2.stuid
+      AND l1.wholoves = s1.stuid
+      AND l1.whoisloved = s2.stuid
+      AND l2.wholoves = s2.stuid
+      AND l2.whoisloved = s1.stuid
+--------------
+
++-------+--------+----------+-------+---------+--------+
+| stuid | fname  | lname    | stuid | fname   | lname  |
++-------+--------+----------+-------+---------+--------+
+|  1006 | Andy   | Schultz  |  1008 | Jandy   | Nelson |
+|  1001 | Linda  | Smith    |  1014 | Charles | Norris |
+|  1010 | Derek  | Lee      |  1015 | Susan   | Lee    |
+|  1016 | Mark   | Schwartz |  1017 | Bruce   | Wilson |
+|  1012 | Steven | Davis    |  1024 | Stacy   | Prater |
++-------+--------+----------+-------+---------+--------+
+5 rows in set (0.003 sec)
+
+--------------
+-- 9. List the names of all students who love someone who does not love them back
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname
+FROM Student s
+WHERE EXISTS (SELECT *
+  FROM Student s2, Loves l
+  WHERE l.wholoves = s.stuid
+        AND l.whoisloved = s2.stuid
+        AND NOT EXISTS (SELECT *
+        FROM Loves l2
+        WHERE l2.wholoves = s2.stuid
+          AND l2.whoisloved = s.stuid)
+)
+--------------
+
++---------+----------+
+| fname   | lname    |
++---------+----------+
+| Linda   | Smith    |
+| Tracy   | Kim      |
+| Shiela  | Jones    |
+| Paul    | Gompers  |
+| Andy    | Schultz  |
+| Lisa    | Apap     |
+| Eric    | Tai      |
+| Arthur  | Pang     |
+| Ian     | Thornton |
+| George  | Andreou  |
+| Michael | Woods    |
+| David   | Shieber  |
+| Stacy   | Prater   |
+| Mark    | Goldman  |
+| Eric    | Pang     |
+| Eric    | Rugh     |
+| Jun     | Han      |
+| Sarah   | Smith    |
+| Eric    | Brown    |
+| William | Simms    |
+| Eric    | Epp      |
++---------+----------+
+21 rows in set (0.020 sec)
+
+--------------
+-- 10. List the the names of all pairs of roommates where there exists a third party who
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- loves them both. (Do not list a pair more than once; list the student with the lowest
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- ID number in the pair first)
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s1.fname,
+        s1.lname,
+        s2.fname,
+        s2.lname
+FROM Student s1, Student s2, Lives_in a, Lives_in b
+WHERE s1.stuid < s2.stuid
+AND a.stuid = s1.stuid
+AND b.stuid = s2.stuid
+AND s1.stuid != s2.stuid
+AND a.dormid = b.dormid
+AND a.room_number = b.room_number
+AND EXISTS (SELECT *
+  FROM Student s3, Loves l1, Loves l2
+  WHERE l1.wholoves = s3.stuid
+  AND l1.whoisloved = s1.stuid
+  AND l2.wholoves = s3.stuid
+  AND l2.whoisloved = s2.stuid
+  AND s3.stuid != s1.stuid
+  AND s3.stuid != s2.stuid)
+--------------
+
++--------+---------+--------+---------+
+| fname  | lname   | fname  | lname   |
++--------+---------+--------+---------+
+| Paul   | Gompers | Steven | Davis   |
+| Tracy  | Kim     | Sarah  | Smith   |
+| Shiela | Jones   | Sarah  | Schmidt |
++--------+---------+--------+---------+
+3 rows in set (0.003 sec)
+
+--------------
+-- 11. List the name and gender of the student who is liked by the most other students,
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- including the total number of students who like him or her.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, s.sex,
+COUNT(*) AS num_students_like
+FROM Student s, Likes l
+WHERE s.stuid = l.whoisliked
+GROUP BY s.stuid, s.fname, s.lname, s.sex
+HAVING COUNT(*) >= ALL (SELECT COUNT(*)
+                        FROM Likes l2
+                        WHERE l2.wholikes != l2.whoisliked
+                        GROUP BY l2.whoisliked)
+--------------
+
++-------+--------+------+-------------------+
+| fname | lname  | sex  | num_students_like |
++-------+--------+------+-------------------+
+| Jandy | Nelson | F    |                19 |
++-------+--------+------+-------------------+
+1 row in set (0.002 sec)
+
+--------------
+-- 12. List the most common first name in the database (including first names of both
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- faculty and students), along with the number of times this first name appears in the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- database.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT fname, COUNT(*)
+FROM (
+  SELECT fname FROM Student UNION ALL SELECT fname FROM Faculty
+) AS combined_names
+GROUP BY combined_names.fname
+HAVING COUNT(*) >= ALL (
+    SELECT COUNT(*)
+    FROM (
+      SELECT fname FROM Student UNION ALL SELECT fname FROM Faculty
+    ) AS combined_names2
+    GROUP BY fname
+)
+--------------
+
++-------+----------+
+| fname | COUNT(*) |
++-------+----------+
+| Eric  |        6 |
++-------+----------+
+1 row in set (0.001 sec)
+
+--------------
+-- 13. List the name, age and major of all students along with the total number of credits
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- they are enrolled in.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, s.age, d.DName AS major, SUM(c.Credits) AS num_credits
+FROM Student s
+JOIN Department d ON s.major = d.DNO
+LEFT JOIN Enrolled_in e ON s.stuid = e.stuid
+LEFT JOIN Course c ON c.CID = e.CID
+GROUP BY s.stuid, s.fname, s.lname, s.age, d.DName
+--------------
+
++---------+----------+------+-----------------------+-------------+
+| fname   | lname    | age  | major                 | num_credits |
++---------+----------+------+-----------------------+-------------+
+| Linda   | Smith    |   18 | Computer Science      |          16 |
+| Tracy   | Kim      |   19 | Computer Science      |          20 |
+| Shiela  | Jones    |   21 | Computer Science      |          15 |
+| Dinesh  | Kumar    |   20 | Computer Science      |          19 |
+| Paul    | Gompers  |   26 | Computer Science      |          11 |
+| Andy    | Schultz  |   18 | Computer Science      |          17 |
+| Lisa    | Apap     |   18 | Computer Science      |          19 |
+| Jandy   | Nelson   |   20 | Computer Science      |          15 |
+| Eric    | Tai      |   19 | Computer Science      |          26 |
+| Derek   | Lee      |   17 | Computer Science      |          26 |
+| David   | Adams    |   22 | Computer Science      |          20 |
+| Steven  | Davis    |   20 | Computer Science      |          16 |
+| Charles | Norris   |   18 | Computer Science      |          21 |
+| Susan   | Lee      |   16 | Computer Science      |          14 |
+| Mark    | Schwartz |   17 | Computer Science      |          23 |
+| Bruce   | Wilson   |   27 | Computer Science      |          19 |
+| Michael | Leighton |   20 | Computer Science      |          17 |
+| Arthur  | Pang     |   18 | Computer Science      |          11 |
+| Ian     | Thornton |   22 | ECE                   |          15 |
+| George  | Andreou  |   19 | ECE                   |          23 |
+| Michael | Woods    |   17 | Chemical Engineering  |          27 |
+| David   | Shieber  |   20 | ECE                   |          24 |
+| Stacy   | Prater   |   18 | Chemical Engineering  |          27 |
+| Mark    | Goldman  |   18 | ECE                   |          26 |
+| Eric    | Pang     |   19 | ECE                   |          16 |
+| Paul    | Brody    |   18 | ECE                   |          19 |
+| Eric    | Rugh     |   20 | Mathematical Sciences |          16 |
+| Jun     | Han      |   17 | History               |          20 |
+| Lisa    | Cheng    |   21 | Mathematical Sciences |          26 |
+| Sarah   | Smith    |   20 | Mathematical Sciences |          13 |
+| Eric    | Brown    |   20 | Mathematical Sciences |          18 |
+| William | Simms    |   18 | Mathematical Sciences |          15 |
+| Eric    | Epp      |   18 | Cognitive Science     |          16 |
+| Sarah   | Schmidt  |   26 | Cognitive Science     |          16 |
+| John    | Doe      |   21 | Computer Science      |          16 |
++---------+----------+------+-----------------------+-------------+
+35 rows in set (0.006 sec)
+
+--------------
+-- 14. List the names and genders of all pairs of student who love each other and are also
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- roommates of each other. (Don't list a pair more than once; list the student with the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- lowest ID number in the pair first)
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s1.fname, s1.lname, s1.sex, s2.fname, s2.lname, s2.sex
+FROM Student s1, Student s2, Lives_in l1, Lives_in l2, Loves lo1, Loves lo2
+WHERE s1.stuid < s2.stuid
+    AND lo1.wholoves = s1.stuid
+    AND lo1.whoisloved = s2.stuid
+    AND lo2.wholoves = s2.stuid
+    AND lo2.whoisloved = s1.stuid
+    AND l1.dormid = l2.dormid
+    AND l1.room_number = l2.room_number
+    AND l1.stuid = s1.stuid
+    AND l2.stuid = s2.stuid
+--------------
+
++-------+-------+------+-------+-------+------+
+| fname | lname | sex  | fname | lname | sex  |
++-------+-------+------+-------+-------+------+
+| Derek | Lee   | M    | Susan | Lee   | F    |
++-------+-------+------+-------+-------+------+
+1 row in set (0.001 sec)
+
+--------------
+-- 16.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- Assuming a course workload is 10 hours a week, which student(s) have the highest
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- workload across both sports and academics, and how many hours a week do they
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- spend on both these activities combined?
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, (COALESCE(c.course_hours, 0) + COALESCE(sp.sports_hours, 0)) AS total_workload
+FROM Student s
+LEFT JOIN (
+    SELECT stuid, COUNT(CID) * 10 AS course_hours
+    FROM Enrolled_in
+    GROUP BY stuid
+) c ON s.stuid = c.stuid
+LEFT JOIN (
+    SELECT stuid, SUM(hoursperweek) AS sports_hours
+    FROM SportsInfo
+    GROUP BY stuid
+) sp ON s.stuid = sp.stuid
+GROUP BY s.stuid, s.fname, s.lname, c.course_hours, sp.sports_hours
+HAVING (COALESCE(c.course_hours, 0) + COALESCE(sp.sports_hours, 0)) >= ALL (
+    SELECT (COALESCE(c1.course_hours, 0) + COALESCE(sp1.sports_hours, 0))
+    FROM Student s2
+    LEFT JOIN (SELECT stuid, COUNT(CID) * 10 AS course_hours FROM Enrolled_in GROUP BY stuid) c1 ON s2.stuid = c1.stuid
+    LEFT JOIN (SELECT stuid, SUM(hoursperweek) AS sports_hours FROM SportsInfo GROUP BY stuid) sp1 ON s2.stuid = sp1.stuid
+)
+--------------
+
++-------+--------+----------------+
+| fname | lname  | total_workload |
++-------+--------+----------------+
+| Jandy | Nelson |            120 |
++-------+--------+----------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 17. List the name of the student liked by the greatest number of students. If a tie, list
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- all tied winners.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname
+FROM Student s, Likes l
+WHERE s.stuid = l.whoisliked
+  AND l.whoisliked != l.wholikes
+GROUP BY s.stuid, s.fname, s.lname
+HAVING COUNT(*) >= ALL (SELECT COUNT(*)
+                        FROM Student s1, Likes l1
+                        WHERE s1.stuid = l1.whoisliked
+                        AND l1.whoisliked != l1.wholikes
+                        GROUP BY s1.stuid, s1.fname, s1.lname)
+--------------
+
++-------+--------+
+| fname | lname  |
++-------+--------+
+| Jandy | Nelson |
++-------+--------+
+1 row in set (0.003 sec)
+
+--------------
+-- 19. List the dorm names of those that have at least 1 video game player and none of
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- whom have played the game "Call of Destiny"
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT d.dorm_name
+FROM Dorm d
+WHERE EXISTS (SELECT *
+              FROM Lives_in l, Plays_Games p
+              WHERE l.dormid = d.dormid
+                AND p.stuid = l.stuid)
+AND NOT EXISTS (SELECT *
+                FROM Lives_in l, Plays_Games p, Video_Games g
+                WHERE l.dormid = d.dormid
+                  AND p.stuid = l.stuid
+                  AND g.gameid = p.gameid
+                  AND g.gname = 'Call of Destiny')
+--------------
+
++---------------+
+| dorm_name     |
++---------------+
+| Fawlty Towers |
++---------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 20. List the names of students who do not play video games and have received an 'B' or
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- lower in a class offered by the Computer Science Department.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname
+FROM Student s, Enrolled_in e, Course c, Department d, Gradeconversion g
+WHERE e.stuid = s.stuid
+AND c.cid = e.cid
+AND d.dno = c.dno
+AND d.dname = 'Computer Science'
+AND g.lettergrade = e.grade
+AND g.gradepoint <= 3.0
+AND NOT EXISTS (SELECT * FROM Plays_Games p
+                WHERE p.stuid = s.stuid)
+--------------
+
++---------+----------+
+| fname   | lname    |
++---------+----------+
+| Tracy   | Kim      |
+| Tracy   | Kim      |
+| Tracy   | Kim      |
+| Shiela  | Jones    |
+| Shiela  | Jones    |
+| Shiela  | Jones    |
+| Shiela  | Jones    |
+| Dinesh  | Kumar    |
+| Dinesh  | Kumar    |
+| Dinesh  | Kumar    |
+| Dinesh  | Kumar    |
+| Paul    | Gompers  |
+| Paul    | Gompers  |
+| Paul    | Gompers  |
+| Andy    | Schultz  |
+| Andy    | Schultz  |
+| Steven  | Davis    |
+| Charles | Norris   |
+| Charles | Norris   |
+| Charles | Norris   |
+| Susan   | Lee      |
+| Mark    | Schwartz |
+| Bruce   | Wilson   |
+| Michael | Leighton |
+| Michael | Leighton |
+| Michael | Leighton |
+| Arthur  | Pang     |
+| Arthur  | Pang     |
+| Arthur  | Pang     |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| George  | Andreou  |
+| Michael | Woods    |
+| Michael | Woods    |
+| Michael | Woods    |
+| David   | Shieber  |
+| David   | Shieber  |
+| David   | Shieber  |
+| David   | Shieber  |
+| Stacy   | Prater   |
+| Mark    | Goldman  |
+| Eric    | Pang     |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Paul    | Brody    |
+| Jun     | Han      |
+| Lisa    | Cheng    |
+| William | Simms    |
+| Eric    | Epp      |
+| Sarah   | Schmidt  |
++---------+----------+
+59 rows in set (0.274 sec)
+
+--------------
+-- 21. List the names and department names of all students who are a CA for
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+--  a course not offered by their department.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT DISTINCT s.fname, s.lname, d.dname
+FROM Student s, Course_CA ca, Course c, Department d
+WHERE s.stuid = ca.stuid
+  AND c.cid = ca.cid
+  AND d.dno = s.major
+  AND c.dno != s.major
+--------------
+
++-------+----------+------------------+
+| fname | lname    | dname            |
++-------+----------+------------------+
+| Andy  | Schultz  | Computer Science |
+| Mark  | Schwartz | Computer Science |
++-------+----------+------------------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 22. List the name, age and major of students who like every pop musical artist in the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- database, but does not like any rap artist with a rating of greater than 3.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, s.age, d.dname
+FROM Student s, Department d
+WHERE d.dno = s.major
+  AND NOT EXISTS (SELECT *
+                  FROM MusicalArtist m
+                  WHERE m.musicalgenre = 'Pop'
+                    AND NOT EXISTS (SELECT *
+                                    FROM LikesArtist la
+                                    WHERE la.stuid = s.stuid
+                                      AND la.artid = m.artid))
+  AND NOT EXISTS (SELECT *
+                  FROM LikesArtist la2, MusicalArtist m2
+                  WHERE la2.stuid = s.stuid
+                    AND m2.artid = la2.artid
+                    AND m2.musicalgenre = 'Rap'
+                    AND la2.rating > 3)
+--------------
+
+Empty set (0.001 sec)
+
+--------------
+-- 23. List the name, age and major of all students who like at least one pop musical artist
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- that no one else in the database likes.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, s.age, d.dname
+FROM Student s, Department d, LikesArtist la, MusicalArtist m
+WHERE d.dno = s.major
+  AND la.stuid = s.stuid
+  AND m.artid = la.artid
+  AND m.musicalgenre = 'Pop'
+  AND NOT EXISTS (SELECT *
+                  FROM LikesArtist la2
+                  WHERE la2.artid = la.artid
+                    AND la2.stuid != s.stuid)
+--------------
+
++-------+----------+------+-------+
+| fname | lname    | age  | dname |
++-------+----------+------+-------+
+| Ian   | Thornton |   22 | ECE   |
++-------+----------+------+-------+
+1 row in set (0.001 sec)
+
+--------------
+-- 24. List the name of all activities where number of faculty participating is greater than
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- the number of students particpating, also including the total number of participating
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- faculty and total number of participating students
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- use left join as activities with no students wouldn't be accounted for faculty > student
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT
+    a.activity_name,
+    COALESCE(f.num_faculty, 0) AS num_faculty,
+    COALESCE(s.num_students, 0) AS num_students
+FROM Activity a
+LEFT JOIN (
+    SELECT actid, COUNT(*) AS num_students
+    FROM Participates_in
+    GROUP BY actid
+) s ON a.actid = s.actid
+LEFT JOIN (
+    SELECT actid, COUNT(*) AS num_faculty
+    FROM Faculty_Participates_in
+    GROUP BY actid
+) f ON a.actid = f.actid
+WHERE COALESCE(f.num_faculty, 0) > COALESCE(s.num_students, 0)
+--------------
+
++-----------------+-------------+--------------+
+| activity_name   | num_faculty | num_students |
++-----------------+-------------+--------------+
+| Extreme Canasta |           3 |            2 |
+| Square Dancing  |           2 |            0 |
++-----------------+-------------+--------------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 26. List the name of the Computer Science faculty member who has either advised or
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- taught at least 3 distinct students with at least 6 months of work experience each in
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- a company that focuses on finance.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT f.fname, f.lname
+FROM Faculty f, Member_of m, (SELECT advisor AS facid, stuid FROM Student
+                              UNION
+                              SELECT c.instructor, e.stuid
+                              FROM Course c, Enrolled_in e
+                              WHERE e.cid = c.cid) fs,
+                              WorkExp w, Company co
+WHERE m.facid = f.facid
+AND m.dno = 601
+AND fs.facid = f.facid
+AND w.stuid = fs.stuid
+AND w.number_months_worked >= 6
+AND co.companyid = w.companyid
+AND co.industry = 'Finance'
+GROUP BY f.facid, f.fname, f.lname
+HAVING COUNT(DISTINCT fs.stuid) >= 3
+--------------
+
++---------+----------+
+| fname   | lname    |
++---------+----------+
+| Michael | Goodrich |
+| Stacey  | Jones    |
+| David   | Yarowsky |
+| Baruch  | Awerbuch |
+| Eric    | Brill    |
+| Yair    | Amir     |
+| Rao     | Kosaraju |
+| Arthur  | Delcher  |
++---------+----------+
+8 rows in set (0.004 sec)
+
+--------------
+-- 28. List the name and student capacity of all dorms along with their total number of female student atheletes in that dorm (including if 0) and the total number of computer
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- science majors (including if 0)
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT
+    d.dorm_name,
+    d.student_capacity,
+    COUNT(DISTINCT CASE
+        WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+        THEN s.stuid
+    END) AS female_student_athletes,
+    COUNT(DISTINCT CASE
+        WHEN s.major = 601
+        THEN s.stuid
+    END) AS cs_majors
+FROM Dorm d
+LEFT JOIN Lives_in l
+    ON d.dormid = l.dormid
+LEFT JOIN Student s
+    ON l.stuid = s.stuid
+LEFT JOIN SportsInfo si
+    ON s.stuid = si.stuid
+GROUP BY d.dormid, d.dorm_name, d.student_capacity
+--------------
+
++----------------------+------------------+-------------------------+-----------+
+| dorm_name            | student_capacity | female_student_athletes | cs_majors |
++----------------------+------------------+-------------------------+-----------+
+| Smith Hall           |               85 |                       4 |         2 |
+| Grad Student Asylum  |              256 |                       0 |         1 |
+| Anonymous Donor Hall |              128 |                       1 |         1 |
+| Bud Jones Hall       |              116 |                       0 |         0 |
+| University Hovels    |               40 |                       0 |         0 |
+| Fawlty Towers        |              355 |                       1 |         7 |
+| Dorm-plex 2000       |              400 |                       2 |         5 |
++----------------------+------------------+-------------------------+-----------+
+7 rows in set (0.001 sec)
+
+--------------
+-- 30. List the name and student capacity of the dorm which has the greatest number of
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- female student athletes but no computer science majors. If there is a tie, report data
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- for all such dorms.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT
+    d.dorm_name,
+    d.student_capacity,
+    COUNT(DISTINCT CASE
+        WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+        THEN s.stuid
+    END) AS female_student_athletes
+FROM Dorm d
+LEFT JOIN Lives_in l ON d.dormid = l.dormid
+LEFT JOIN Student s ON l.stuid = s.stuid
+LEFT JOIN SportsInfo si ON s.stuid = si.stuid
+WHERE NOT EXISTS (
+    SELECT *
+    FROM Student s1
+    JOIN Lives_in l1 ON s1.stuid = l1.stuid
+    WHERE l1.dormid = d.dormid
+      AND s1.major = 601
+)
+GROUP BY d.dormid, d.dorm_name, d.student_capacity
+HAVING COUNT(DISTINCT CASE
+    WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+    THEN s.stuid
+END) >= ALL (
+    SELECT COUNT(DISTINCT CASE
+        WHEN s2.sex = 'F' AND si1.stuid IS NOT NULL
+        THEN s2.stuid
+    END)
+    FROM Dorm d1
+    LEFT JOIN Lives_in l1 ON d1.dormid = l1.dormid
+    LEFT JOIN Student s2 ON l1.stuid = s2.stuid
+    LEFT JOIN SportsInfo si1 ON s2.stuid = si1.stuid
+    WHERE NOT EXISTS (
+        SELECT *
+        FROM Student s3
+        JOIN Lives_in l2 ON s3.stuid = l2.stuid
+        WHERE l2.dormid = d1.dormid
+          AND s3.major = 601
+    )
+    GROUP BY d1.dormid
+)
+--------------
+
++-------------------+------------------+-------------------------+
+| dorm_name         | student_capacity | female_student_athletes |
++-------------------+------------------+-------------------------+
+| Bud Jones Hall    |              116 |                       0 |
+| University Hovels |               40 |                       0 |
++-------------------+------------------+-------------------------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 31. List the first name, last name, email and major of all the students who play at least
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- 1 video game and also have more than one A- or higher grade across all the classes
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- they are enrolled in.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- Email does not exist in either the table schema given or the actual database.txt.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- Who is writing these homeworks bruh
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, d.dname AS major
+FROM Student s, Department d
+WHERE d.dno = s.major
+  AND EXISTS (SELECT * FROM Plays_Games p WHERE p.stuid = s.stuid)
+  AND (SELECT COUNT(DISTINCT e.cid)
+       FROM Enrolled_in e, Gradeconversion g
+       WHERE e.stuid = s.stuid
+         AND g.lettergrade = e.grade
+         AND g.gradepoint >= 3.7) > 1
+--------------
+
++-------+-------+-----------------------+
+| fname | lname | major                 |
++-------+-------+-----------------------+
+| Linda | Smith | Computer Science      |
+| Lisa  | Apap  | Computer Science      |
+| Derek | Lee   | Computer Science      |
+| Eric  | Brown | Mathematical Sciences |
++-------+-------+-----------------------+
+4 rows in set (0.006 sec)
+
+--------------
+-- 32. List the full name, rank and gender of all faculty members who both teach at least
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- one course in computer science or mechanical engineering and also coaches a sport.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT f.fname, f.lname, f.rank, f.sex
+FROM Faculty f, Course c, Department d, CoachedBy cb
+WHERE c.instructor = f.facid
+  AND d.dno = c.dno
+  AND d.dname IN ('Computer Science', 'Mechanical Engineering')
+  AND cb.facid = f.facid
+--------------
+
++---------+-------+-----------+------+
+| fname   | lname | rank      | sex  |
++---------+-------+-----------+------+
+| Theresa | Maria | AsstCoach | F    |
++---------+-------+-----------+------+
+1 row in set (0.001 sec)
+
+--------------
+-- 47. List the ID and full name of each student who has at least Intermediate proficiency in
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- every language recorded for student 1001. Compare levels using Proficiency Numeric,
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- exclude student 1001, and require that student 1001 have at least one recorded language. The candidate's proficiency need not match student 1001's level; Intermediate
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- is the threshold for every required language
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.stuid, s.fname, s.lname
+FROM Student s
+WHERE s.stuid != 1001
+  AND EXISTS (SELECT * FROM Student_Languages x WHERE x.stuid = 1001)
+  AND NOT EXISTS (SELECT *
+                  FROM Student_Languages l1
+                  WHERE l1.stuid = 1001
+                    AND NOT EXISTS (SELECT *
+                                    FROM Student_Languages l2, Proficiency_Numeric p
+                                    WHERE l2.stuid = s.stuid
+                                      AND l2.language = l1.language
+                                      AND p.proficiency_level = l2.proficiency_level
+                                      AND p.proficiency_numeric >= 2))
+--------------
+
+Empty set (0.001 sec)
+
+--------------
+-- 48. List the names of Computer Science faculty members who have taught more distinct
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- students with work experience at software companies than distinct students with work
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- experience at finance companies. Also list both totals for each such faculty member.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT
+    f.fname,
+    f.lname,
+    COUNT(DISTINCT CASE
+        WHEN co.industry = 'Software'
+        THEN e.stuid
+    END) AS software_students,
+    COUNT(DISTINCT CASE
+        WHEN co.industry = 'Finance'
+        THEN e.stuid
+    END) AS finance_students
+FROM Faculty f, Member_of m, Course c, Enrolled_in e, WorkExp w, Company co
+WHERE f.facid = m.facid
+    AND f.facid = c.instructor
+    AND c.cid = e.cid
+    AND e.stuid = w.stuid
+    AND w.companyid = co.companyid
+    AND m.dno = 601
+GROUP BY f.facid, f.fname, f.lname
+HAVING COUNT(DISTINCT CASE
+    WHEN co.industry = 'Software'
+    THEN e.stuid
+END) >
+COUNT(DISTINCT CASE
+    WHEN co.industry = 'Finance'
+    THEN e.stuid
+END)
+--------------
+
++---------+--------------+-------------------+------------------+
+| fname   | lname        | software_students | finance_students |
++---------+--------------+-------------------+------------------+
+| Michael | Goodrich     |                 3 |                2 |
+| Gerald  | Masson       |                 3 |                0 |
+| David   | Yarowsky     |                 5 |                4 |
+| Louis   | Beach        |                 3 |                2 |
+| Ellie   | Angelopoulou |                 3 |                2 |
+| Yair    | Amir         |                 4 |                3 |
++---------+--------------+-------------------+------------------+
+6 rows in set (0.072 sec)
+
+--------------
+-- 49. List the name and student capacity of the dorm whose student athletes have the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- highest average number of sports hours per week, considering only dorms with at
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- least two student athletes. If there is a tie, report all tied dorms, along with the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- average number of sports hours per week.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT d.dorm_name, d.student_capacity, AVG(a.hrs) AS avg_hours_per_week
+FROM Dorm d, Lives_in l,
+     (SELECT stuid, SUM(hoursperweek) AS hrs FROM SportsInfo GROUP BY stuid) a
+WHERE l.dormid = d.dormid
+  AND a.stuid = l.stuid
+GROUP BY d.dormid, d.dorm_name, d.student_capacity
+HAVING COUNT(*) >= 2
+   AND AVG(a.hrs) >= ALL (SELECT AVG(a2.hrs)
+                          FROM Lives_in l2,
+                               (SELECT stuid, SUM(hoursperweek) AS hrs
+                                FROM SportsInfo GROUP BY stuid) a2
+                          WHERE a2.stuid = l2.stuid
+                          GROUP BY l2.dormid
+                          HAVING COUNT(*) >= 2)
+--------------
+
++----------------+------------------+--------------------+
+| dorm_name      | student_capacity | avg_hours_per_week |
++----------------+------------------+--------------------+
+| Dorm-plex 2000 |              400 |            36.2500 |
++----------------+------------------+--------------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 50. For each musical genre, list the artist or artists having the highest average student
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- rating within that genre. Also list the artist name, genre, average rating, and number
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- of students who rated the artist. If there is a tie within a genre, list all tied artists.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.genre, s.artistname, s.avg_rating, s.num_raters
+FROM (SELECT m.artid, m.artistname, m.musicalgenre AS genre,
+             AVG(r.rating) AS avg_rating, COUNT(DISTINCT r.stuid) AS num_raters
+      FROM MusicalArtist m,
+           (SELECT DISTINCT stuid, artid, rating FROM LikesArtist) r
+      WHERE r.artid = m.artid
+      GROUP BY m.artid, m.artistname, m.musicalgenre) s
+WHERE s.avg_rating = (SELECT MAX(s2.avg_rating)
+                      FROM (SELECT m.artid, m.musicalgenre AS genre,
+                                   AVG(r.rating) AS avg_rating
+                            FROM MusicalArtist m,
+                                 (SELECT DISTINCT stuid, artid, rating FROM LikesArtist) r
+                            WHERE r.artid = m.artid
+                            GROUP BY m.artid, m.musicalgenre) s2
+                      WHERE s2.genre = s.genre)
+--------------
+
++-------+--------------+------------+------------+
+| genre | artistname   | avg_rating | num_raters |
++-------+--------------+------------+------------+
+| Rap   | Eminem       |     9.5000 |          2 |
+| Pop   | Taylor Swift |    10.0000 |          4 |
++-------+--------------+------------+------------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 51. For each musical genre, list the artist or artists with the highest average rating among
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- artists rated by at least two distinct students. Include the genre, artist ID, artist name,
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- number of distinct raters, and average rating. Use the rating convention in Question
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- 1 and report all ties. Omit genres with no qualifying artist.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.genre, s.artid, s.artistname, s.num_raters, s.avg_rating
+FROM (SELECT m.artid, m.artistname, m.musicalgenre AS genre,
+             AVG(r.rating) AS avg_rating, COUNT(DISTINCT r.stuid) AS num_raters
+      FROM MusicalArtist m,
+           (SELECT DISTINCT stuid, artid, rating FROM LikesArtist) r
+      WHERE r.artid = m.artid
+      GROUP BY m.artid, m.artistname, m.musicalgenre
+      HAVING COUNT(DISTINCT r.stuid) >= 2) s
+WHERE s.avg_rating = (SELECT MAX(s2.avg_rating)
+                      FROM (SELECT m.artid, m.musicalgenre AS genre,
+                                   AVG(r.rating) AS avg_rating
+                            FROM MusicalArtist m,
+                                 (SELECT DISTINCT stuid, artid, rating FROM LikesArtist) r
+                            WHERE r.artid = m.artid
+                            GROUP BY m.artid, m.musicalgenre
+                            HAVING COUNT(DISTINCT r.stuid) >= 2) s2
+                      WHERE s2.genre = s.genre)
+--------------
+
++-------+-------+--------------+------------+------------+
+| genre | artid | artistname   | num_raters | avg_rating |
++-------+-------+--------------+------------+------------+
+| Rap   |     1 | Eminem       |          2 |     9.5000 |
+| Pop   |     2 | Taylor Swift |          4 |    10.0000 |
++-------+-------+--------------+------------+------------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 52. List the student ID and full name of each student who has applied for at least one job
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- and has accepted an offer for every distinct job they applied for. Match applications
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- to accepted offers using student ID, company, and position; disregard the application
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- date when identifying a distinct job. Additional accepted offers are irrelevant. List
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- each student once.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.stuid, s.fname, s.lname
+FROM Student s
+WHERE EXISTS (SELECT * FROM JobsAppliedFor j WHERE j.stuid = s.stuid)
+  AND NOT EXISTS (SELECT *
+                  FROM JobsAppliedFor j
+                  WHERE j.stuid = s.stuid
+                    AND NOT EXISTS (SELECT *
+                                    FROM OffersAccepted o
+                                    WHERE o.stuid = j.stuid
+                                      AND o.company = j.company
+                                      AND o.position = j.position))
+--------------
+
++-------+-------+--------+
+| stuid | fname | lname  |
++-------+-------+--------+
+|  1001 | Linda | Smith  |
+|  1008 | Jandy | Nelson |
+|  1011 | David | Adams  |
++-------+-------+--------+
+3 rows in set (0.001 sec)
+
+--------------
+-- 53. For every department, list its department number and name, the number of distinct
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- faculty members with a primary appointment in the department, and the number of
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- distinct students enrolled in at least one course offered by the department. Determine
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- the offering department from Course.DNO, regardless of the instructor's appointment.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- Include every department, reporting each missing count as zero. Count each faculty
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- member and student only once within a department, even if multiple appointment or
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- enrollment records match.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT d.dno, d.dname,
+       (SELECT COUNT(DISTINCT m.facid)
+        FROM Member_of m
+        WHERE m.dno = d.dno
+          AND m.appt_type = 'Primary') AS num_primary_faculty,
+       (SELECT COUNT(DISTINCT e.stuid)
+        FROM Enrolled_in e, Course c
+        WHERE c.cid = e.cid
+          AND c.dno = d.dno) AS num_students
+FROM Department d
+--------------
+
++------+--------------------------+---------------------+--------------+
+| dno  | dname                    | num_primary_faculty | num_students |
++------+--------------------------+---------------------+--------------+
+|   10 | History of Art           |                   0 |            0 |
+|   20 | Biology                  |                   0 |            0 |
+|   30 | Chemistry                |                   0 |            0 |
+|   40 | Classics                 |                   0 |            0 |
+|   50 | Cognitive Science        |                   7 |            5 |
+|   60 | English                  |                   0 |            0 |
+|   70 | Anthropology             |                   0 |            0 |
+|   90 | German                   |                   0 |            0 |
+|  100 | History                  |                   0 |            0 |
+|  110 | Mathematics              |                   0 |            0 |
+|  130 | Near Eastern Studies     |                   0 |            0 |
+|  140 | History of Science       |                   0 |            0 |
+|  150 | Philosophy               |                   0 |            0 |
+|  170 | Physics and Astronomy    |                   0 |            0 |
+|  180 | Economics                |                   0 |            0 |
+|  190 | Political Science        |                   0 |            0 |
+|  200 | Psychology               |                   0 |            0 |
+|  340 | French                   |                   0 |            0 |
+|  350 | Hispanic/Italian Studies |                   0 |            0 |
+|  520 | ECE                      |                  20 |            7 |
+|  530 | Mechanical Engineering   |                   0 |            0 |
+|  540 | Chemical Engineering     |                   0 |            0 |
+|  550 | Mathematical Sciences    |                  13 |           17 |
+|  560 | Civil Engineering        |                   0 |            0 |
+|  580 | Biomedical Engineering   |                   0 |            0 |
+|  601 | Computer Science         |                  18 |           34 |
++------+--------------------------+---------------------+--------------+
+26 rows in set (0.004 sec)
+
+--------------
+-- 54. List the full name, major name, and absence rate of students whose absence rate
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- exceeds the average rate among enrolled students in their major. Define a student's
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- absence rate as their total recorded absences in courses they are enrolled in divided
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- by their number of distinct enrolled courses. Compute each major's average as the
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- arithmetic mean of its enrolled students' individual absence rates. Include enrolled
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- students with zero absences when calculating this average, and exclude students with
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- no enrollments.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname, d.dname major, r.rate absence_rate
+FROM (SELECT s1.stuid, s1.major,
+             (SELECT COUNT(*)
+              FROM Student_Absence a
+              WHERE a.stuid = s1.stuid
+                AND EXISTS (SELECT * FROM Enrolled_in e
+                            WHERE e.stuid = a.stuid AND e.cid = a.cid))
+             / (SELECT COUNT(DISTINCT e2.cid)
+                FROM Enrolled_in e2
+                WHERE e2.stuid = s1.stuid) rate
+      FROM Student s1
+      WHERE EXISTS (SELECT * FROM Enrolled_in e3 WHERE e3.stuid = s1.stuid)) r,
+     Student s, Department d
+WHERE s.stuid = r.stuid
+  AND d.dno = s.major
+  AND r.rate > (SELECT AVG(r2.rate)
+                FROM (SELECT s2.stuid, s2.major,
+                             (SELECT COUNT(*)
+                              FROM Student_Absence a
+                              WHERE a.stuid = s2.stuid
+                                AND EXISTS (SELECT * FROM Enrolled_in e
+                                            WHERE e.stuid = a.stuid AND e.cid = a.cid))
+                             / (SELECT COUNT(DISTINCT e2.cid)
+                                FROM Enrolled_in e2
+                                WHERE e2.stuid = s2.stuid) rate
+                      FROM Student s2
+                      WHERE EXISTS (SELECT * FROM Enrolled_in e3 WHERE e3.stuid = s2.stuid)) r2
+                WHERE r2.major = r.major)
+--------------
+
++--------+---------+------------------+--------------+
+| fname  | lname   | major            | absence_rate |
++--------+---------+------------------+--------------+
+| Paul   | Gompers | Computer Science |       0.2000 |
+| Derek  | Lee     | Computer Science |       0.1429 |
+| Steven | Davis   | Computer Science |       0.2000 |
++--------+---------+------------------+--------------+
+3 rows in set (0.013 sec)
+
+--------------
+-- 55. List the name and multilingual-resident percentage of the dorms with the highest
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- such percentage. Define a multilingual student as one with at least two distinct
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- languages recorded in Student Languages. Calculate each dorm's percentage as 100
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- times its number of distinct multilingual residents divided by its total number of
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- distinct residents. Include all ties and exclude dorms without residents.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT d.dorm_name,
+       100 * COUNT(DISTINCT m.stuid) / COUNT(DISTINCT l.stuid) AS multilingual_pct
+FROM Dorm d
+     JOIN Lives_in l ON l.dormid = d.dormid
+     LEFT JOIN (SELECT stuid FROM Student_Languages
+                GROUP BY stuid
+                HAVING COUNT(DISTINCT language) >= 2) m ON m.stuid = l.stuid
+GROUP BY d.dormid, d.dorm_name
+HAVING 100 * COUNT(DISTINCT m.stuid) / COUNT(DISTINCT l.stuid) >=
+       ALL (SELECT 100 * COUNT(DISTINCT m2.stuid) / COUNT(DISTINCT l2.stuid)
+            FROM Lives_in l2
+                 LEFT JOIN (SELECT stuid FROM Student_Languages
+                            GROUP BY stuid
+                            HAVING COUNT(DISTINCT language) >= 2) m2 ON m2.stuid = l2.stuid
+            GROUP BY l2.dormid)
+--------------
+
++----------------------+------------------+
+| dorm_name            | multilingual_pct |
++----------------------+------------------+
+| Anonymous Donor Hall |          33.3333 |
++----------------------+------------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 56.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT d.dname, e.eventname, c.cnt AS num_attending_students
+FROM (SELECT s.major, a.eventid, COUNT(DISTINCT s.stuid) AS cnt
+      FROM Attends_Student_Life_Event a, Student s
+      WHERE s.stuid = a.stuid
+      GROUP BY s.major, a.eventid) c,
+     Department d, Student_Life_Event e
+WHERE d.dno = c.major
+  AND e.eventid = c.eventid
+  AND c.cnt = (SELECT MAX(c2.cnt)
+               FROM (SELECT s.major, a.eventid, COUNT(DISTINCT s.stuid) AS cnt
+                     FROM Attends_Student_Life_Event a, Student s
+                     WHERE s.stuid = a.stuid
+                     GROUP BY s.major, a.eventid) c2
+               WHERE c2.major = c.major)
+--------------
+
++------------------+-------------------------------+------------------------+
+| dname            | eventname                     | num_attending_students |
++------------------+-------------------------------+------------------------+
+| Computer Science | Fall Student Involvement Fair |                      2 |
++------------------+-------------------------------+------------------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 57.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname
+FROM Student s
+WHERE EXISTS (SELECT *
+              FROM Member_of_club mc, Student_Life_Event e
+              WHERE mc.stuid = s.stuid
+                AND e.sponsorclubid = mc.clubid)
+  AND NOT EXISTS (SELECT *
+                  FROM Member_of_club mc, Student_Life_Event e
+                  WHERE mc.stuid = s.stuid
+                    AND e.sponsorclubid = mc.clubid
+                    AND NOT EXISTS (SELECT *
+                                    FROM Attends_Student_Life_Event a
+                                    WHERE a.stuid = s.stuid
+                                      AND a.eventid = e.eventid))
+--------------
+
++-------+--------+
+| fname | lname  |
++-------+--------+
+| Linda | Smith  |
+| Jandy | Nelson |
++-------+--------+
+2 rows in set (0.001 sec)
+
+--------------
+-- 58.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT p.projectid, p.projecttitle, c.cname
+FROM Course_Projects p, Course c
+WHERE c.cid = p.cid
+  AND EXISTS (SELECT * FROM Enrolled_in e WHERE e.cid = p.cid)
+  AND NOT EXISTS (SELECT *
+                  FROM Enrolled_in e, Student s
+                  WHERE e.cid = p.cid
+                    AND s.stuid = e.stuid
+                    AND NOT EXISTS (SELECT *
+                                    FROM Project_Members pm, Student s2
+                                    WHERE pm.projectid = p.projectid
+                                      AND s2.stuid = pm.stuid
+                                      AND s2.major = s.major))
+--------------
+
++-----------+----------------------+--------------------------+
+| projectid | projecttitle         | cname                    |
++-----------+----------------------+--------------------------+
+|         2 | Shell Implementation | UNIX SYSTEMS PROGRAMMING |
++-----------+----------------------+--------------------------+
+1 row in set (0.001 sec)
+
+--------------
+-- 59.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.stuid, s.fname, s.lname
+FROM Student s
+WHERE EXISTS (SELECT *
+              FROM Campus_Event ce, Department d
+              WHERE d.dno = ce.dno
+                AND d.dname = 'Computer Science')
+  AND NOT EXISTS (SELECT *
+                  FROM Campus_Event ce, Department d
+                  WHERE d.dno = ce.dno
+                    AND d.dname = 'Computer Science'
+                    AND NOT EXISTS (SELECT *
+                                    FROM Event_Registration er
+                                    WHERE er.eventid = ce.eventid
+                                      AND er.stuid = s.stuid))
+--------------
+
++-------+-------+-------+
+| stuid | fname | lname |
++-------+-------+-------+
+|  1001 | Linda | Smith |
++-------+-------+-------+
+1 row in set (0.001 sec)
+
+--------------
+-- 60.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT p.cid, p.cname, p.session_id, p.session_date, p.tutor,
+       FORMAT(p.pct, 2) AS attendance_pct
+FROM (SELECT c.cid, c.cname, ts.session_id, ts.session_date,
+             CONCAT(t.fname, ' ', t.lname) AS tutor,
+             100.0 * (SELECT COUNT(DISTINCT ta.stuid)
+                      FROM Tutoring_Attendance ta
+                      WHERE ta.session_id = ts.session_id
+                        AND ta.stuid != ts.tutor_stuid
+                        AND EXISTS (SELECT * FROM Enrolled_in e
+                                    WHERE e.stuid = ta.stuid AND e.cid = ts.cid))
+             / (SELECT COUNT(DISTINCT e2.stuid)
+                FROM Enrolled_in e2
+                WHERE e2.cid = ts.cid) AS pct
+      FROM Tutoring_Session ts, Course c, Student t
+      WHERE c.cid = ts.cid
+        AND t.stuid = ts.tutor_stuid
+        AND EXISTS (SELECT * FROM Enrolled_in e3 WHERE e3.cid = ts.cid)) p
+WHERE p.pct = (SELECT MAX(p2.pct)
+               FROM (SELECT ts.cid,
+                            100.0 * (SELECT COUNT(DISTINCT ta.stuid)
+                                     FROM Tutoring_Attendance ta
+                                     WHERE ta.session_id = ts.session_id
+                                       AND ta.stuid != ts.tutor_stuid
+                                       AND EXISTS (SELECT * FROM Enrolled_in e
+                                                   WHERE e.stuid = ta.stuid AND e.cid = ts.cid))
+                            / (SELECT COUNT(DISTINCT e2.stuid)
+                               FROM Enrolled_in e2
+                               WHERE e2.cid = ts.cid) AS pct
+                     FROM Tutoring_Session ts
+                     WHERE EXISTS (SELECT * FROM Enrolled_in e3 WHERE e3.cid = ts.cid)) p2
+               WHERE p2.cid = p.cid)
+--------------
+
++---------+------------------+------------+--------------+--------------+----------------+
+| cid     | cname            | session_id | session_date | tutor        | attendance_pct |
++---------+------------------+------------+--------------+--------------+----------------+
+| 601.315 | DATABASE SYSTEMS |          1 | 2026-10-12   | Eric Rugh    | 13.33          |
+| 601.415 | DATABASE SYSTEMS |          3 | 2026-10-20   | Ian Thornton | 14.29          |
++---------+------------------+------------+--------------+--------------+----------------+
+2 rows in set (0.002 sec)
+
+--------------
+-- 61. My own question: Let being loved by equal double the weight of being liked (whoisloved = 2 * whoisliked) so the total appreciation of someone
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- is: appreciation = 2 * whoisloved + whoisliked. Find the first and last names of the student(s) with the highest appreciation score among students who are course assistants
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+-- for courses offered by departments other than their own major department. Include all ties.
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+--------------
+SELECT s.fname, s.lname
+FROM Student s
+WHERE EXISTS (
+    SELECT *
+    FROM Course_CA ca, Course c
+    WHERE ca.stuid = s.stuid
+      AND ca.cid = c.cid
+      AND c.dno != s.major
+)
+AND (
+    SELECT COUNT(DISTINCT l.wholikes)
+    FROM Likes l
+    WHERE l.whoisliked = s.stuid
+) + 2 * (
+    SELECT COUNT(DISTINCT lv.wholoves)
+    FROM Loves lv
+    WHERE lv.whoisloved = s.stuid
+) >= ALL (
+    SELECT
+        (SELECT COUNT(DISTINCT l2.wholikes)
+         FROM Likes l2
+         WHERE l2.whoisliked = s1.stuid)
+        + 2 * (
+            SELECT COUNT(DISTINCT lv2.wholoves)
+            FROM Loves lv2
+            WHERE lv2.whoisloved = s1.stuid
+        )
+    FROM Student s1
+    WHERE EXISTS (
+        SELECT *
+        FROM Course_CA ca1, Course c1
+        WHERE ca1.stuid = s1.stuid
+          AND ca1.cid = c1.cid
+          AND c1.dno != s1.major
+    )
+)
+--------------
+
++-------+---------+
+| fname | lname   |
++-------+---------+
+| Andy  | Schultz |
++-------+---------+
+1 row in set (0.005 sec)
+
+--------------
+-- 62. THIS IS IN QBE.TXT
+--------------
+
+Query OK, 0 rows affected (0.000 sec)
+
+Bye

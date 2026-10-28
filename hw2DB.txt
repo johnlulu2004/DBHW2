@@ -69,7 +69,7 @@ WHERE a.Advisor = f.FacID
 
 SELECT s.FName, s.LName
 FROM Student s
-WHERE NOT EXIST (
+WHERE NOT EXISTS (
   SELECT * 
   FROM Student s2
   WHERE s2.major = s.major
@@ -109,7 +109,7 @@ HAVING COUNT(e.stuid) > 0;
 (Do not list a pair more than once; list the student with the lowest ID number in the
 pair first)
 
-SELECT s1.stuid 
+SELECT s1.stuid,
     s1.fname, 
     s1.lname, 
     s2.stuid,
@@ -121,6 +121,7 @@ WHERE s1.stuid < s2.stuid
       AND l1.whoisloved = s2.stuid
       AND l2.wholoves = s2.stuid
       AND l2.whoisloved = s1.stuid
+      ;
 
 
 9.List the names of all students who love someone who does not love them back
@@ -136,6 +137,7 @@ WHERE EXISTS (SELECT *
         WHERE l2.wholoves = s2.stuid
           AND l2.whoisloved = s.stuid)
 )
+;
 
 
 10. List the the names of all pairs of roommates where there exists a third party who
@@ -162,14 +164,14 @@ AND EXISTS (SELECT *
   AND l2.whoisloved = s2.stuid
   AND s3.stuid != s1.stuid 
   AND s3.stuid !=  s2.stuid)
-
+;
 
 11. List the name and gender of the student who is liked by the most other students,
 including the total number of students who like him or her.
 
-SELECT s.fname, s.lname, s.sex 
+SELECT s.fname, s.lname, s.sex ,
 COUNT(*) AS num_students_like
-FROM Student s, Likes l1
+FROM Student s, Likes l
 WHERE s.stuid = l.whoisliked
 GROUP BY s.stuid, s.fname, s.lname, s.sex
 HAVING COUNT(*) >= ALL (SELECT COUNT(*)
@@ -204,7 +206,7 @@ SELECT s.fname, s.lname, s.age, d.DName as major, SUM(c.Credits) AS num_credits
 FROM Student s
 JOIN Department d ON s.major = d.DNO
 LEFT JOIN Enrolled_In e ON s.stuid = e.stuid
-LEFT JOIN Course c ON c.CID = e.CID, 
+LEFT JOIN Course c ON c.CID = e.CID
 GROUP BY s.stuid, s.fname, s.lname, s.age, d.DName
 
 
@@ -218,7 +220,7 @@ WHERE s1.stuid < s2.stuid
     AND lo1.wholoves = s1.stuid
     AND lo1.whoisloved = s2.stuid
     AND lo2.wholoves = s2.stuid
-    AND lo2.whosiloved = s1.stuid
+    AND lo2.whosisloved = s1.stuid
     AND l1.dormid = l2.dormid
     AND l1.room_number = l2.room_number
     AND l1.stuid = s1.stuid
@@ -265,6 +267,7 @@ HAVING COUNT(*) >= ALL( SELECT COUNT(*)
                         WHERE s1.stuid = l1.whoisliked
                         AND l1.whoisliked!=l1.wholikes
                         GROUP BY s1.stuid, s1.fname, s1.lname)
+                        ;
 
 
 19. List the dorm names of those that have at least 1 video game player and none of
@@ -294,12 +297,12 @@ FROM Student s, Enrolled_in e, Course c, Department d, Gradeconversion g
 WHERE e.stuid = s.stuid
 AND c.cid = e.cid
 AND d.dno = c.dno
-AND d.dname = "Computer Science"
+AND d.dname = 'Computer Science'
 AND g.lettergrade = e.grade
 and g.gradepoint <= 3.0
 AND NOT EXISTS(SELECT * FROM Plays_Games p
               WHERE p.stuid = s.stuid)
-
+;
 
 21. List the names and department names of all students who are a CA for
  a course not offered by their department.
@@ -310,7 +313,7 @@ WHERE s.stuid = ca.stuid
   AND c.cid = ca.cid
   AND d.dno = s.major
   AND c.dno != s.major
-
+;
 
 22. List the name, age and major of students who like every pop musical artist in the
 database, but does not like any rap artist with a rating of greater than 3.
@@ -387,7 +390,7 @@ FROM Faculty f, Member_of m, (SELECT advisor AS facid, stuid FROM Student
                               SELECT c.instructor, e.stuid 
                               FROM Course c, Enrolled_in e
                               WHERE e.cid = c.cid) fs,
-                              WorkExp w, Company Co
+                              WorkExp w, Company co
 WHERE m.facid = f.facid
 AND m.dno = 601
 AND fs.facid = f.facid
@@ -510,7 +513,7 @@ every language recorded for student 1001. Compare levels using Proficiency Numer
 exclude student 1001, and require that student 1001 have at least one recorded language. The candidate’s proficiency need not match student 1001’s level; Intermediate
 is the threshold for every required language
 
-SELECT s.stuid, s.fname, s.lname, 
+SELECT s.stuid, s.fname, s.lname 
 FROM Student s
 WHERE s.stuid != 1001
   AND EXISTS (SELECT * FROM Student_Languages x WHERE x.stuid = 1001)
