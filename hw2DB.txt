@@ -1,8 +1,8 @@
 
-mySQL queries numbered 1,2,4-14,16,17,19-
-24,26,28,30-32,47-62 (42 queries total)
 
-MY SQL QUERIES
+--MY SQL QUERIES 
+--Note: this is not a SQL File, my SQL File is just everything with - in hw2_SQLVERSION.sql
+--i also submitted
 
 1. List the name and age of the oldest student in every major. If there is a tie, list all
 students tying
