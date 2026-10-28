@@ -1,8 +1,9 @@
 
 
---MY SQL QUERIES 
---Note: this is not a SQL File, my SQL File is just everything with - in hw2_SQLVERSION.sql
---i also submitted
+-- MY SQL QUERIES 
+-- Note: this is not a SQL File I used to run in the spool, 
+-- my SQL File is just everything with questions commented with "--" in hw2_SQLVERSION.sql
+-- It is the same as this but fully in SQL (This one has Notes etc.) I submitted it just in case.
 
 1. List the name and age of the oldest student in every major. If there is a tie, list all
 students tying
