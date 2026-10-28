@@ -418,7 +418,7 @@ CONDITIONS | Condition                                                   |
 
 
 
-Q62. (Own question) List the names of students who have played more than 30 hours
+Q62.My question: List the names of students who have played more than 30 hours
 of the video game "RNG Stone" and are loved by a student who has no nut allergy.
 
 -------------------------------------------------------------------------------------
