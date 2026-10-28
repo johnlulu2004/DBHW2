@@ -82,7 +82,7 @@ WHERE NOT EXIST (
       AND l.whoisliked = s2.stuid));
 
 
-// we select the name of studnet when there doesn't exist another student in their major who they don't like?
+-- we select the name of studnet when there doesn't exist another student in their major who they don't like?
 
 
 7.For each course with a total enrollment greater than 0, list the total number of grades 
@@ -208,6 +208,272 @@ LEFT JOIN Course c ON c.CID = e.CID,
 GROUP BY s.stuid, s.fname, s.lname, s.age, d.DName
 
 
+14. List the names and genders of all pairs of student who love each other and are also
+roommates of each other. (Don’t list a pair more than once; list the student with the
+lowest ID number in the pair first)
+
+SELECT s1.fname, s1.lname, s1.sex, s2.fname, s2.lname, s2.sex
+FROM Student s1, Student s2, Lives_In l1, Lives_In l2, Loves lo1, Loves lo2
+WHERE s1.stuid < s2.stuid
+    AND lo1.wholoves = s1.stuid
+    AND lo1.whoisloved = s2.stuid
+    AND lo2.wholoves = s2.stuid
+    AND lo2.whosiloved = s1.stuid
+    AND l1.dormid = l2.dormid
+    AND l1.room_number = l2.room_number
+    AND l1.stuid = s1.stuid
+    AND l2.stuid = s2.stuid;
+
+
+16.
+Assuming a course workload is 10 hours a week, which student(s) have the highest
+workload across both sports and academics, and how many hours a week do they
+spend on both these activities combined?
+
+SELECT s.fname, s.lname, (COALESCE(c.course_hours, 0) + COALESCE(sp.sports_hours, 0)) AS total_workload
+FROM Student s
+LEFT JOIN (
+    SELECT stuid, COUNT(CID) * 10 AS course_hours 
+    FROM Enrolled_In 
+    GROUP BY stuid
+) c ON s.stuid = c.stuid
+LEFT JOIN (
+    SELECT stuid, SUM(hoursperweek) AS sports_hours 
+    FROM Sportsinfo 
+    GROUP BY stuid
+) sp ON s.stuid = sp.stuid
+GROUP BY s.stuid, s.fname, s.lname, c.course_hours, sp.sports_hours
+HAVING (COALESCE(c.course_hours, 0) + COALESCE(sp.sports_hours, 0)) >= ALL (
+    SELECT (COALESCE(c1.course_hours, 0) + COALESCE(sp1.sports_hours, 0))
+    FROM Student s2
+    LEFT JOIN (SELECT stuid, COUNT(CID) * 10 AS course_hours FROM Enrolled_In GROUP BY stuid) c1 ON s2.stuid = c1.stuid
+    LEFT JOIN (SELECT stuid, SUM(hoursperweek) AS sports_hours FROM Sportsinfo GROUP BY stuid) sp1 ON s2.stuid = sp1.stuid
+);
+                                                              
+
+
+17. List the name of the student liked by the greatest number of students. If a tie, list
+all tied winners.
+
+SELECT s.fname, s.lname
+FROM Student s, Likes l
+WHERE s.stuid = l.whoisliked
+  AND l.whoisliked != l.wholikes
+GROUP BY s.stuid, s.fname, s.lname
+HAVING COUNT(*) >= ALL( SELECT COUNT(*) 
+                        FROM Student s1, Likes l1
+                        WHERE s1.stuid = l1.whoisliked
+                        AND l1.whoisliked!=l1.wholikes
+                        GROUP BY s1.stuid, s1.fname, s1.lname)
+
+
+19. List the dorm names of those that have at least 1 video game player and none of
+whom have played the game “Call of Destiny"
+
+SELECT d.dorm_name 
+FROM Dorm d 
+WHERE EXISTS (SELECT *
+FROM Lives_in l, Plays_Games p
+              WHERE l.dormid = d.dormid
+                AND p.stuid = l.stuid)
+AND NOT EXISTS (SELECT *
+                  FROM Lives_in l, Plays_Games p, Video_Games g
+                  WHERE l.dormid = d.dormid
+                    AND p.stuid = l.stuid
+                    AND g.gameid = p.gameid
+                    AND g.gname = 'Call of Destiny');
+
+
+20. List the names of students who do not play video games and have received an ’B’ or
+lower in a class offered by the Computer Science Department.
+
+
+SELECT s.fname, s.lname
+FROM Student s, Enrolled_in e, Course c, Department d, Gradeconversion g
+
+WHERE e.stuid = s.stuid
+AND c.cid = e.cid
+AND d.dno = c.dno
+AND d.dname = "Computer Science"
+AND g.lettergrade = e.grade
+and g.gradepoint <= 3.0
+AND NOT EXISTS(SELECT * FROM Plays_Games p
+              WHERE p.stuid = s.stuid)
+
+
+21. List the names and department names of all students who are a CA for
+ a course not offered by their department.
+
+SELECT DISTINCT s.fname, s.lname, d.dname
+FROM Student s, Course_CA ca, Course c, Department d
+WHERE s.stuid = ca.stuid
+  AND c.cid = ca.cid
+  AND d.dno = s.major
+  AND c.dno != s.major
+
+
+22. List the name, age and major of students who like every pop musical artist in the
+database, but does not like any rap artist with a rating of greater than 3.
+
+
+SELECT s.fname, s.lname, s.age, d.dname
+FROM Student s, Department d
+WHERE d.dno = s.major
+  AND NOT EXISTS (SELECT *
+                  FROM MusicalArtist m
+                  WHERE m.musicalgenre = 'Pop'
+                    AND NOT EXISTS (SELECT *
+                                    FROM LikesArtist la
+                                    WHERE la.stuid = s.stuid
+                                      AND la.artid = m.artid))
+  AND NOT EXISTS (SELECT *
+                  FROM LikesArtist la2, MusicalArtist m2
+                  WHERE la2.stuid = s.stuid
+                    AND m2.artid = la2.artid
+                    AND m2.musicalgenre = 'Rap'
+                    AND la2.rating > 3);
 
 
 
+23. List the name, age and major of all students who like at least one pop musical artist
+that no one else in the database likes.
+
+
+SELECT s.fname, s.lname, s.age, d.dname
+FROM Student s, Department d, LikesArtist la, MusicalArtist m
+WHERE d.dno = s.major
+  AND la.stuid = s.stuid
+  AND m.artid = la.artid
+  AND m.musicalgenre = 'Pop'
+  AND NOT EXISTS (SELECT *
+                  FROM LikesArtist la2
+                  WHERE la2.artid = la.artid
+                    AND la2.stuid != s.stuid);
+
+
+24. List the name of all activities where number of faculty participating is greater than
+the number of students particpating, also including the total number of participating
+faculty and total number of participating students
+
+--use left join as activities with no students wouldn't be accounted for faculty > student
+
+SELECT 
+    a.activity_name, 
+    COALESCE(f.num_faculty, 0) AS num_faculty, 
+    COALESCE(s.num_students, 0) AS num_students
+FROM Activity a
+LEFT JOIN (
+    SELECT actid, COUNT(*) AS num_students
+    FROM Participates_in
+    GROUP BY actid
+) s ON a.actid = s.actid
+LEFT JOIN (
+    SELECT actid, COUNT(*) AS num_faculty
+    FROM Faculty_Participates_in
+    GROUP BY actid
+) f ON a.actid = f.actid
+WHERE COALESCE(f.num_faculty, 0) > COALESCE(s.num_students, 0);
+
+
+
+26. List the name of the Computer Science faculty member who has either advised or
+taught at least 3 distinct students with at least 6 months of work experience each in
+a company that focuses on finance.
+
+
+SELECT F.fname, f.lname
+FROM Faculty f, Member_of m, (SELECT advisor AS facid, stuid FROM Student 
+                              UNION 
+                              SELECT c.instructor, e.stuid 
+                              FROM Course c, Enrolled_in e
+                              WHERE e.cid = c.cid) fs,
+                              WorkExp w, Company Co
+WHERE m.facid = f.facid
+AND m.dno = 601
+AND fs.facid = f.facid
+AND w.stuid = fs.stuid
+AND w.number_months_worked >= 6
+AND co.companyid = w.companyid
+AND co.industry = 'Finance'
+GROUP BY f.facid, f.fname, f.lname
+HAVING COUNT(DISTINCT fs.stuid) >= 3;
+
+
+
+28. List the name and student capacity of all dorms along with their total number of female student atheletes in that dorm (including if 0) and the total number of computer
+science majors (including if 0)
+
+
+SELECT
+    d.dorm_name,
+    d.student_capacity,
+    COUNT(DISTINCT CASE
+        WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+        THEN s.stuid
+    END) AS female_student_athletes,
+    COUNT(DISTINCT CASE
+        WHEN s.major = 601
+        THEN s.stuid
+    END) AS cs_majors
+FROM Dorm d
+LEFT JOIN lives_in l
+    ON d.dormid = l.dormid
+LEFT JOIN student s
+    ON l.stuid = s.stuid
+LEFT JOIN sportsinfo si
+    ON s.stuid = si.stuid
+GROUP BY d.dormid, d.dorm_name, d.student_capacity;
+
+
+
+
+
+
+30. List the name and student capacity of the dorm which has the greatest number of
+female student athletes but no computer science majors. If there is a tie, report data
+for all such dorms.
+
+SELECT
+    d.dorm_name,
+    d.student_capacity,
+    COUNT(DISTINCT CASE
+        WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+        THEN s.stuid
+    END) AS female_student_athletes
+FROM Dorm d
+LEFT JOIN Lives_in l ON d.dormid = l.dormid
+LEFT JOIN Student s ON l.stuid = s.stuid
+LEFT JOIN Sportsinfo si ON s.stuid = si.stuid
+WHERE NOT EXISTS (
+    SELECT *
+    FROM Student s1
+    JOIN Lives_in l1 ON s1.stuid = l1.stuid
+    WHERE l1.dormid = d.dormid
+      AND s1.major = 601
+)
+GROUP BY d.dormid, d.dorm_name, d.student_capacity
+HAVING COUNT(DISTINCT CASE
+    WHEN s.sex = 'F' AND si.stuid IS NOT NULL
+    THEN s.stuid
+END) >= ALL (
+    SELECT COUNT(DISTINCT CASE
+        WHEN s2.sex = 'F' AND si1.stuid IS NOT NULL
+        THEN s2.stuid
+    END)
+    FROM Dorm d1
+    LEFT JOIN Lives_in l1 ON d1.dormid = l1.dormid
+    LEFT JOIN Student s2 ON l1.stuid = s2.stuid
+    LEFT JOIN Sportsinfo si1 ON s2.stuid = si1.stuid
+    WHERE NOT EXISTS (
+        SELECT *
+        FROM Student s3
+        JOIN Lives_in l2 ON s3.stuid = l2.stuid
+        WHERE l2.dormid = d1.dormid
+          AND s3.major = 601
+    )
+    GROUP BY d1.dormid
+);
+
+
+
+    
