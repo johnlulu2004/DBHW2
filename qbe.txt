@@ -1,16 +1,4 @@
-QBE QUERIES - 601.415/615 HW2
-
-Notation (as in lecture):
-  P.   print                    _x   variable (example element)
-  ¬ in the relation-name cell = "there does not exist such a row"
-  ¬_x in an attribute cell    = "not equal to x"
-  G.   group by (P.G. = print the grouping attribute)
-  Aggregates always end in ALL. (SUM.ALL._x, CNT.UNQ.ALL._x); UNQ. removes duplicates
-  I.   insert into the RESULT table (used for intermediate results)
-  CONDITIONS = condition box: extra constraints on the variables
-Constants in a cell (Pop, Rap, 601, Finance, ...) are selections.
-Output columns print in the column order of the table.
-
+QBE QUERIES
 
 Q2. List the name, age and gender of all students who do not have a roommate.
 
